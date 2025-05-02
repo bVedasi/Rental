@@ -1,5 +1,4 @@
-
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -7,10 +6,12 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import axios from 'axios'; // Use axios to make API calls
 
-// Create a simple context for auth state management
+// Base URL for API calls
+const API_BASE = "http://localhost:5000";
+
 export const useAuth = () => {
-  // Use localStorage to persist login state
   const getIsLoggedIn = () => localStorage.getItem('isLoggedIn') === 'true';
   const [isLoggedIn, setIsLoggedInState] = useState(getIsLoggedIn());
   
@@ -28,30 +29,34 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [phoneNum, setPhoneNum] = useState('');
+  const [address, setAddress] = useState('');
   const { toast } = useToast();
   const navigate = useNavigate();
   const { setIsLoggedIn } = useAuth();
 
-  // Scroll to top when page loads
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, []);
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (isLogin) {
-      toast({
-        title: "Login Successful",
-        description: "You have been logged in successfully.",
-      });
-      
-      // Update login state
-      setIsLoggedIn(true);
-      
-      // Redirect to profile page
-      navigate('/profile');
+      // Login Request
+      try {
+        const response = await axios.post(`${API_BASE}/api/auth/login`, { email, password });
+        toast({
+          title: "Login Successful",
+          description: "You have been logged in successfully.",
+        });
+        setIsLoggedIn(true);
+        navigate('/profile');
+      } catch (error) {
+        toast({
+          title: "Login Failed",
+          description: "Invalid email or password.",
+          variant: "destructive",
+        });
+      }
     } else {
+      // Sign-Up Request
       if (password !== confirmPassword) {
         toast({
           title: "Passwords do not match",
@@ -60,17 +65,28 @@ const Login = () => {
         });
         return;
       }
-      
-      toast({
-        title: "Account Created",
-        description: "Your account has been created successfully.",
-      });
-      
-      // Update login state
-      setIsLoggedIn(true);
-      
-      // Redirect to profile page
-      navigate('/profile');
+
+      try {
+        const response = await axios.post(`${API_BASE}/api/auth/signup`, {
+          name,
+          email,
+          password,
+          phone_num: phoneNum,
+          address,
+        });
+        toast({
+          title: "Account Created",
+          description: "Your account has been created successfully.",
+        });
+        setIsLoggedIn(true);
+        navigate('/profile');
+      } catch (error) {
+        toast({
+          title: "Sign-Up Failed",
+          description: error.response?.data?.error || "An error occurred while signing up.",
+          variant: "destructive",
+        });
+      }
     }
   };
 
@@ -100,7 +116,7 @@ const Login = () => {
                   Sign Up
                 </button>
               </div>
-              
+
               <form onSubmit={handleSubmit} className="space-y-4">
                 {!isLogin && (
                   <div>
@@ -145,29 +161,51 @@ const Login = () => {
                     required
                   />
                 </div>
-                
+
                 {!isLogin && (
-                  <div>
-                    <label htmlFor="confirm-password" className="block text-sm font-medium text-light mb-1 font-montserrat">
-                      Confirm Password
-                    </label>
-                    <input 
-                      type="password"
-                      id="confirm-password"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="w-full bg-dark border border-gold/30 rounded p-2 text-light focus:outline-none focus:ring-1 focus:ring-gold font-montserrat"
-                      required
-                    />
-                  </div>
-                )}
-                
-                {isLogin && (
-                  <div className="flex justify-end">
-                    <button type="button" className="text-sm text-gold hover:underline font-montserrat">
-                      Forgot Password?
-                    </button>
-                  </div>
+                  <>
+                    <div>
+                      <label htmlFor="confirm-password" className="block text-sm font-medium text-light mb-1 font-montserrat">
+                        Confirm Password
+                      </label>
+                      <input 
+                        type="password"
+                        id="confirm-password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        className="w-full bg-dark border border-gold/30 rounded p-2 text-light focus:outline-none focus:ring-1 focus:ring-gold font-montserrat"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="phone_num" className="block text-sm font-medium text-light mb-1 font-montserrat">
+                        Phone Number
+                      </label>
+                      <input 
+                        type="text"
+                        id="phone_num"
+                        value={phoneNum}
+                        onChange={(e) => setPhoneNum(e.target.value)}
+                        className="w-full bg-dark border border-gold/30 rounded p-2 text-light focus:outline-none focus:ring-1 focus:ring-gold font-montserrat"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="address" className="block text-sm font-medium text-light mb-1 font-montserrat">
+                        Address
+                      </label>
+                      <input 
+                        type="text"
+                        id="address"
+                        value={address}
+                        onChange={(e) => setAddress(e.target.value)}
+                        className="w-full bg-dark border border-gold/30 rounded p-2 text-light focus:outline-none focus:ring-1 focus:ring-gold font-montserrat"
+                        required
+                      />
+                    </div>
+                  </>
                 )}
                 
                 <Button 
@@ -188,15 +226,6 @@ const Login = () => {
                   </button>
                 </p>
               </form>
-              
-              <div className="mt-6 pt-6 border-t border-gold/20">
-                <Button variant="outline" className="w-full border-gold/30 text-light hover:bg-gold/10 mb-2 font-montserrat">
-                  Continue with Google
-                </Button>
-                <Button variant="outline" className="w-full border-gold/30 text-light hover:bg-gold/10 font-montserrat">
-                  Continue with Facebook
-                </Button>
-              </div>
             </CardContent>
           </Card>
         </motion.div>

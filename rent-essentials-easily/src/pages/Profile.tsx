@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -8,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { User, Edit, ShoppingCart, Calendar, LogOut } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
+import axios from 'axios';
 
 type RentalHistory = {
   id: number;
@@ -54,16 +54,47 @@ const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const { toast } = useToast();
 
-  // Profile form state
-  const [name, setName] = useState('John Doe');
-  const [email, setEmail] = useState('johndoe@example.com');
-  const [phone, setPhone] = useState('(123) 456-7890');
-  const [address, setAddress] = useState('123 Main St, Anytown, USA');
+  // States for profile data
+  const [user, setUser] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    address: ''
+  });
 
-  // Scroll to top when page loads
+  const [isLoading, setIsLoading] = useState(true); // Loading state
+
+  // Get userId (assuming you have a way to track it after login)
+  const userId = "user-id-from-auth"; // Replace this with the actual user ID from your auth context/session
+
   useEffect(() => {
-    window.scrollTo(0, 0);
-  }, []);
+    // Fetch the user data when the profile page loads
+    const fetchUserData = async () => {
+      try {
+        const response = await axios.get(`/api/user/${userId}`);  // Replace with actual endpoint
+        const data = response.data;
+
+        // Update the state with the fetched data
+        setUser({
+          name: data.name,
+          email: data.email,
+          phone: data.phone,
+          address: data.address
+        });
+
+        setIsLoading(false);  // Set loading state to false once data is fetched
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to load user data.",
+          variant: "destructive"
+        });
+        setIsLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, [userId, toast]);
 
   const handleUpdateProfile = (e: React.FormEvent) => {
     e.preventDefault();
@@ -99,6 +130,12 @@ const Profile = () => {
     }
   };
 
+  if (isLoading) {
+    return (
+      <div>Loading...</div> // Show loading indicator while fetching data
+    );
+  }
+
   return (
     <div className="min-h-screen bg-dark">
       <Navbar />
@@ -127,7 +164,7 @@ const Profile = () => {
                   <div className="w-24 h-24 rounded-full bg-dark-lighter border-2 border-gold flex items-center justify-center mb-4">
                     <User size={40} className="text-gold" />
                   </div>
-                  <h2 className="text-xl font-semibold text-gold">John Doe</h2>
+                  <h2 className="text-xl font-semibold text-gold">{user.name}</h2>
                   <p className="text-light-dark">Member since 2025</p>
                 </div>
                 
@@ -201,8 +238,8 @@ const Profile = () => {
                         </label>
                         <input 
                           type="text"
-                          value={name}
-                          onChange={(e) => setName(e.target.value)}
+                          value={user.name}
+                          onChange={(e) => setUser({ ...user, name: e.target.value })}
                           className="w-full bg-dark border border-gold/30 rounded p-2 text-light focus:outline-none focus:ring-1 focus:ring-gold"
                         />
                       </div>
@@ -213,8 +250,8 @@ const Profile = () => {
                         </label>
                         <input 
                           type="email"
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
+                          value={user.email}
+                          onChange={(e) => setUser({ ...user, email: e.target.value })}
                           className="w-full bg-dark border border-gold/30 rounded p-2 text-light focus:outline-none focus:ring-1 focus:ring-gold"
                         />
                       </div>
@@ -225,8 +262,8 @@ const Profile = () => {
                         </label>
                         <input 
                           type="tel"
-                          value={phone}
-                          onChange={(e) => setPhone(e.target.value)}
+                          value={user.phone}
+                          onChange={(e) => setUser({ ...user, phone: e.target.value })}
                           className="w-full bg-dark border border-gold/30 rounded p-2 text-light focus:outline-none focus:ring-1 focus:ring-gold"
                         />
                       </div>
@@ -236,8 +273,8 @@ const Profile = () => {
                           Address
                         </label>
                         <textarea 
-                          value={address}
-                          onChange={(e) => setAddress(e.target.value)}
+                          value={user.address}
+                          onChange={(e) => setUser({ ...user, address: e.target.value })}
                           rows={3}
                           className="w-full bg-dark border border-gold/30 rounded p-2 text-light focus:outline-none focus:ring-1 focus:ring-gold"
                         />
@@ -245,97 +282,40 @@ const Profile = () => {
                       
                       <Button 
                         type="submit"
-                        className="bg-gold text-dark hover:bg-gold/90"
+                        className="w-full bg-gold text-dark mt-4"
                       >
                         Save Changes
                       </Button>
                     </form>
                   ) : (
                     <div className="space-y-4">
-                      <div>
-                        <h3 className="text-sm text-light-dark">Full Name</h3>
-                        <p className="text-light">{name}</p>
-                      </div>
-                      
-                      <div>
-                        <h3 className="text-sm text-light-dark">Email Address</h3>
-                        <p className="text-light">{email}</p>
-                      </div>
-                      
-                      <div>
-                        <h3 className="text-sm text-light-dark">Phone Number</h3>
-                        <p className="text-light">{phone}</p>
-                      </div>
-                      
-                      <div>
-                        <h3 className="text-sm text-light-dark">Address</h3>
-                        <p className="text-light">{address}</p>
-                      </div>
-                      
-                      <div className="pt-4 border-t border-gold/20">
-                        <h3 className="text-sm font-medium text-gold mb-2">Account Security</h3>
-                        <Button 
-                          variant="outline"
-                          className="border-gold/30 text-light hover:bg-gold/10 mr-3"
-                        >
-                          Change Password
-                        </Button>
-                        <Button 
-                          variant="outline"
-                          className="border-gold/30 text-light hover:bg-gold/10"
-                        >
-                          Two-Factor Authentication
-                        </Button>
-                      </div>
+                      <p><strong>Name:</strong> {user.name}</p>
+                      <p><strong>Email:</strong> {user.email}</p>
+                      <p><strong>Phone:</strong> {user.phone}</p>
+                      <p><strong>Address:</strong> {user.address}</p>
                     </div>
                   )}
                 </CardContent>
               </Card>
             ) : (
-              <Card className="bg-dark-light border border-gold/30">
-                <CardContent className="p-6">
-                  <h2 className="text-xl font-semibold text-gold mb-6">Rental History</h2>
-                  
-                  <div className="space-y-4">
-                    {rentalHistory.map((rental) => (
-                      <div 
-                        key={rental.id}
-                        className="flex flex-col md:flex-row gap-4 p-4 border border-gold/20 rounded-lg bg-dark"
-                      >
-                        <div className="w-full md:w-24 h-24 flex-shrink-0 overflow-hidden rounded-md">
-                          <img 
-                            src={rental.image} 
-                            alt={rental.name} 
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                        <div className="flex-grow">
-                          <div className="flex flex-wrap justify-between">
-                            <h3 className="text-lg font-medium text-light">{rental.name}</h3>
-                            <span className={`${getStatusColor(rental.status)}`}>
-                              {getStatusText(rental.status)}
-                            </span>
-                          </div>
-                          <div className="mt-2">
-                            <p className="text-sm text-light-dark">
-                              {new Date(rental.startDate).toLocaleDateString()} - {new Date(rental.endDate).toLocaleDateString()}
-                            </p>
-                            <p className="text-gold mt-1">${rental.price.toFixed(2)}</p>
-                          </div>
-                          {rental.status === 'active' && (
-                            <Button 
-                              className="mt-3 bg-dark-lighter border border-gold/50 text-gold hover:bg-gold hover:text-dark transition-all duration-300"
-                              size="sm"
-                            >
-                              Extend Rental
-                            </Button>
-                          )}
+              <div className="space-y-4">
+                <h2 className="text-xl font-semibold text-gold mb-6">Rental History</h2>
+                {rentalHistory.map((rental) => (
+                  <Card key={rental.id} className="bg-dark-light border border-gold/30">
+                    <CardContent className="p-6">
+                      <div className="flex space-x-4">
+                        <img src={rental.image} alt={rental.name} className="w-24 h-24 object-cover rounded" />
+                        <div>
+                          <h3 className="text-lg text-gold">{rental.name}</h3>
+                          <p className="text-light-dark">{getStatusText(rental.status)}</p>
+                          <p className="text-light-dark">Renting from {rental.startDate} to {rental.endDate}</p>
+                          <p className="text-gold text-xl">${rental.price}</p>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
             )}
           </motion.div>
         </div>
