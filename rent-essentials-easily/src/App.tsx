@@ -13,6 +13,7 @@ import Login from "./pages/Login";
 import Profile from "./pages/Profile";
 import Products from "./pages/Products";
 import { CartProvider } from "./context/CartContext";
+import ThankYou from "./pages/ThankYou"; 
 
 // Create Auth Context
 const AuthContext = createContext(null);
@@ -62,6 +63,7 @@ const App = () => {
                   }
                 />
                 <Route path="/login" element={<Login />} />
+                <Route path="/thank-you" element={<ThankYou />} />
                 <Route
                   path="/categories"
                   element={

@@ -50,9 +50,10 @@ const rentalHistory: RentalHistory[] = [
 ];
 
 const Profile = () => {
-  const [activeTab, setActiveTab] = useState<'profile' | 'rentals'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'rentals' | 'current'>('profile');
   const [isEditing, setIsEditing] = useState(false);
   const { toast } = useToast();
+  const [currentRentals, setCurrentRentals] = useState<RentalHistory[]>([]);
 
   // States for profile data
   const [user, setUser] = useState({
@@ -65,21 +66,21 @@ const Profile = () => {
   const [isLoading, setIsLoading] = useState(true); // Loading state
 
   // Get userId (assuming you have a way to track it after login)
-  const userId = "user-id-from-auth"; // Replace this with the actual user ID from your auth context/session
+  const userId = JSON.parse(localStorage.getItem('user') || '{}').id; // Replace this with the actual user ID from your auth context/session
 
   useEffect(() => {
     // Fetch the user data when the profile page loads
     const fetchUserData = async () => {
       try {
-        const response = await axios.get(`/api/user/${userId}`);  // Replace with actual endpoint
-        const data = response.data;
+        // const response = await axios.get(`/api/user/${userId}`);  // Replace with actual endpoint
+        const data = JSON.parse(localStorage.getItem('user') || '{}'); // Simulating API call
 
         // Update the state with the fetched data
         setUser({
-          name: data.name,
-          email: data.email,
-          phone: data.phone,
-          address: data.address
+          name: data.username || '',
+          email: data.email || '',
+          phone: data.phone_num || '',
+          address: data.address || ''
         });
 
         setIsLoading(false);  // Set loading state to false once data is fetched
@@ -95,6 +96,23 @@ const Profile = () => {
 
     fetchUserData();
   }, [userId, toast]);
+
+  // Fetch current rentals from local storage
+  useEffect(() => {
+    try {
+      const current = localStorage.getItem('current');
+      if (current) {
+        setCurrentRentals(JSON.parse(current));
+      }
+    } catch (error) {
+      console.error("Error fetching current rentals:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load current rentals data.",
+        variant: "destructive"
+      });
+    }
+  }, [toast]);
 
   const handleUpdateProfile = (e: React.FormEvent) => {
     e.preventDefault();
@@ -130,9 +148,28 @@ const Profile = () => {
     }
   };
 
+  // Rental item display component - reused for both rental history and current rentals
+  const RentalItem = ({ rental }: { rental: RentalHistory }) => (
+    <Card key={rental.id} className="bg-dark-light border border-gold/30">
+      <CardContent className="p-6">
+        <div className="flex space-x-4">
+          <img src={rental.image} alt={rental.name} className="w-24 h-24 object-cover rounded" />
+          <div>
+            <h3 className="text-lg text-gold">{rental.name}</h3>
+            <p className={`${getStatusColor(rental.status)}`}>{getStatusText(rental.status)}</p>
+            <p className="text-light-dark">Renting </p>
+            <p className="text-gold text-xl">${rental.price}</p>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
   if (isLoading) {
     return (
-      <div>Loading...</div> // Show loading indicator while fetching data
+      <div className="min-h-screen bg-dark flex items-center justify-center">
+        <p className="text-gold text-xl">Loading...</p>
+      </div>
     );
   }
 
@@ -182,18 +219,17 @@ const Profile = () => {
                     className={`w-full justify-start ${activeTab === 'rentals' ? 'bg-gold/10 text-gold' : 'text-light hover:bg-gold/5 hover:text-gold'}`}
                     onClick={() => setActiveTab('rentals')}
                   >
-                    <ShoppingCart size={18} className="mr-2" />
+                    <Calendar size={18} className="mr-2" />
                     Rental History
                   </Button>
-                  <Link to="/cart">
-                    <Button
-                      variant="ghost"
-                      className="w-full justify-start text-light hover:bg-gold/5 hover:text-gold"
-                    >
-                      <Calendar size={18} className="mr-2" />
-                      Current Rentals
-                    </Button>
-                  </Link>
+                  <Button
+                    variant="ghost"
+                    className={`w-full justify-start ${activeTab === 'current' ? 'bg-gold/10 text-gold' : 'text-light hover:bg-gold/5 hover:text-gold'}`}
+                    onClick={() => setActiveTab('current')}
+                  >
+                    <ShoppingCart size={18} className="mr-2" />
+                    Current Rentals
+                  </Button>
                   <Button
                     variant="ghost"
                     className="w-full justify-start text-light hover:bg-gold/5 hover:text-gold"
@@ -214,7 +250,7 @@ const Profile = () => {
             transition={{ duration: 0.5, delay: 0.4 }}
             className="lg:col-span-3"
           >
-            {activeTab === 'profile' ? (
+            {activeTab === 'profile' && (
               <Card className="bg-dark-light border border-gold/30">
                 <CardContent className="p-6">
                   <div className="flex justify-between items-center mb-6">
@@ -289,32 +325,52 @@ const Profile = () => {
                     </form>
                   ) : (
                     <div className="space-y-4">
-                      <p><strong>Name:</strong> {user.name}</p>
-                      <p><strong>Email:</strong> {user.email}</p>
-                      <p><strong>Phone:</strong> {user.phone}</p>
-                      <p><strong>Address:</strong> {user.address}</p>
+                      <p className="text-light"><strong className="text-gold">Name:</strong> {user.name}</p>
+                      <p className="text-light"><strong className="text-gold">Email:</strong> {user.email}</p>
+                      <p className="text-light"><strong className="text-gold">Phone:</strong> {user.phone}</p>
+                      <p className="text-light"><strong className="text-gold">Address:</strong> {user.address}</p>
                     </div>
                   )}
                 </CardContent>
               </Card>
-            ) : (
+            )}
+
+            {activeTab === 'rentals' && (
               <div className="space-y-4">
                 <h2 className="text-xl font-semibold text-gold mb-6">Rental History</h2>
-                {rentalHistory.map((rental) => (
-                  <Card key={rental.id} className="bg-dark-light border border-gold/30">
-                    <CardContent className="p-6">
-                      <div className="flex space-x-4">
-                        <img src={rental.image} alt={rental.name} className="w-24 h-24 object-cover rounded" />
-                        <div>
-                          <h3 className="text-lg text-gold">{rental.name}</h3>
-                          <p className="text-light-dark">{getStatusText(rental.status)}</p>
-                          <p className="text-light-dark">Renting from {rental.startDate} to {rental.endDate}</p>
-                          <p className="text-gold text-xl">${rental.price}</p>
-                        </div>
-                      </div>
+                {rentalHistory.length > 0 ? (
+                  rentalHistory.map((rental) => (
+                    <RentalItem key={rental.id} rental={rental} />
+                  ))
+                ) : (
+                  <Card className="bg-dark-light border border-gold/30">
+                    <CardContent className="p-6 text-center">
+                      <p className="text-light-dark">No rental history available.</p>
                     </CardContent>
                   </Card>
-                ))}
+                )}
+              </div>
+            )}
+
+            {activeTab === 'current' && (
+              <div className="space-y-4">
+                <h2 className="text-xl font-semibold text-gold mb-6">Current Rentals</h2>
+                {currentRentals && currentRentals.length > 0 ? (
+                  currentRentals.map((rental) => (
+                    <RentalItem key={rental.id} rental={rental} />
+                  ))
+                ) : (
+                  <Card className="bg-dark-light border border-gold/30">
+                    <CardContent className="p-6 text-center">
+                      <p className="text-light-dark">You don't have any active rentals.</p>
+                      <Link to="/catalog" className="block mt-4">
+                        <Button className="bg-gold text-dark">
+                          Browse Catalog
+                        </Button>
+                      </Link>
+                    </CardContent>
+                  </Card>
+                )}
               </div>
             )}
           </motion.div>

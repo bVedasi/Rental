@@ -1,5 +1,4 @@
-
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { motion } from "framer-motion";
@@ -13,6 +12,7 @@ import { Link } from 'react-router-dom';
 const Cart = () => {
   const { cartItems, removeFromCart, updateQuantity, updateDays } = useCart();
   const { toast } = useToast();
+  const [isCheckout, setIsCheckout] = useState(false); // Added state for checkout process
 
   // Scroll to top when page loads
   useEffect(() => {
@@ -24,10 +24,34 @@ const Cart = () => {
   };
 
   const handleCheckout = () => {
+    if (cartItems.length === 0) return;
+  
     toast({
-      title: "Checkout initiated",
-      description: "This is a demo. No actual checkout will occur.",
+      title: "Order Confirmed!",
+      description: "Your rental has been successfully placed.",
+      duration: 3000,
     });
+  
+    setTimeout(() => {
+      // Clear cart
+      cartItems.forEach((item) => removeFromCart(item.id));
+  
+      // Show QR code and Done button
+      setIsCheckout(true);
+    }, 1000);
+  };
+
+  const handleDone = () => {
+    let cart = JSON.parse(localStorage.getItem('cart')) || []; // Get cart from localStorage or default to an empty array
+    let current = JSON.parse(localStorage.getItem('current')) || []; // Get current from localStorage or default to an empty array
+    
+    // Append the items from cart to current
+    current = [...current, ...cart];
+    
+    // Set the updated current back to localStorage
+    localStorage.setItem('current', JSON.stringify(current));
+     // Clear cart from localStorage
+    window.location.href = "/thank-you"; // Redirect to thank-you page
   };
 
   return (
@@ -57,6 +81,26 @@ const Cart = () => {
                 Continue Shopping
               </Button>
             </Link>
+          </motion.div>
+        ) : isCheckout ? (
+          // Show QR code and Done button after checkout
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="text-center py-12"
+          >
+            <img 
+              src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRuIy6HNc3zXzJ9-y-rNEfnaSdhcgeXytmnQg&s" // Your static QR code image here
+              alt="QR Code" 
+              className="mx-auto mb-6"
+            />
+            <Button 
+              className="bg-gold text-dark hover:bg-gold/90 font-montserrat"
+              onClick={handleDone}
+            >
+              Done
+            </Button>
           </motion.div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -88,7 +132,7 @@ const Cart = () => {
                               <X size={18} />
                             </button>
                           </div>
-                          <p className="text-gold mt-1 font-montserrat">{item.price} / day</p>
+                          <p className="text-gold mt-1 font-montserrat">${item.price} / day</p>
                           
                           <div className="flex flex-col sm:flex-row justify-between mt-3 gap-3">
                             <div className="flex items-center">
@@ -124,7 +168,7 @@ const Cart = () => {
                           <div className="mt-2 text-right">
                             <p className="text-light font-montserrat">
                               Subtotal: <span className="text-gold font-semibold">
-                                {(item.price * item.days * item.quantity).toFixed(2)}
+                                ${(item.price * item.days * item.quantity).toFixed(2)}
                               </span>
                             </p>
                           </div>
@@ -148,21 +192,21 @@ const Cart = () => {
                   <div className="space-y-3 mb-4">
                     <div className="flex justify-between">
                       <span className="text-light-dark font-montserrat">Subtotal</span>
-                      <span className="text-light font-montserrat">{calculateSubtotal().toFixed(2)}</span>
+                      <span className="text-light font-montserrat">${calculateSubtotal().toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-light-dark font-montserrat">Delivery Fee</span>
-                      <span className="text-light font-montserrat">9.99</span>
+                      <span className="text-light font-montserrat">$9.99</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-light-dark font-montserrat">Taxes</span>
-                      <span className="text-light font-montserrat">{(calculateSubtotal() * 0.08).toFixed(2)}</span>
+                      <span className="text-light font-montserrat">${(calculateSubtotal() * 0.08).toFixed(2)}</span>
                     </div>
                     <div className="border-t border-gold/20 pt-3 mt-3">
                       <div className="flex justify-between font-semibold">
                         <span className="text-light font-montserrat">Total</span>
                         <span className="text-gold font-playfair">
-                          {(calculateSubtotal() + 9.99 + calculateSubtotal() * 0.08).toFixed(2)}
+                          ${(calculateSubtotal() + 9.99 + calculateSubtotal() * 0.08).toFixed(2)}
                         </span>
                       </div>
                     </div>

@@ -90,7 +90,7 @@ app.post('/api/auth/login', async (req, res) => {
     if (!isPasswordValid) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
-
+    console.log("Supabase returned user data:", { data, error });
     // Login successful, return user data or token
     return res.status(200).json({
       message: 'Login successful',
@@ -197,4 +197,26 @@ app.post('/api/addToCart', async (req, res) => {
 
   if (error) return res.status(500).json({ error: error.message });
   res.status(200).json({ message: 'Item added to cart', data });
+});
+
+
+// Rental History Route
+app.get('/api/rentals/:userId', async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    // Assuming you have a table `rentals` that links rentals to users
+    const { data, error } = await supabase
+      .from('rentals')
+      .select('id, name, image, startDate, endDate, price, status')
+      .eq('user_id', userId); // Make sure to replace `user_id` with the actual field name
+
+    if (error) {
+      return res.status(500).json({ error: error.message });
+    }
+
+    return res.json(data);
+  } catch (error) {
+    return res.status(500).json({ error: 'Failed to fetch rental history' });
+  }
 });

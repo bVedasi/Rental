@@ -19,8 +19,12 @@ export const useAuth = () => {
     localStorage.setItem('isLoggedIn', value ? 'true' : 'false');
     setIsLoggedInState(value);
   };
-  
-  return { isLoggedIn, setIsLoggedIn };
+
+  const setUser = (user: any) => {
+    localStorage.setItem('user', JSON.stringify(user));
+  };
+
+  return { isLoggedIn, setIsLoggedIn, setUser }; // Returning setUser from the hook
 };
 
 const Login = () => {
@@ -33,7 +37,7 @@ const Login = () => {
   const [address, setAddress] = useState('');
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { setIsLoggedIn } = useAuth();
+  const { setIsLoggedIn, setUser } = useAuth(); // Get setUser here from useAuth hook
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,12 +46,17 @@ const Login = () => {
       // Login Request
       try {
         const response = await axios.post(`${API_BASE}/api/auth/login`, { email, password });
-        toast({
-          title: "Login Successful",
-          description: "You have been logged in successfully.",
-        });
-        setIsLoggedIn(true);
-        navigate('/profile');
+        if (response.data.user) { // Check if user data exists
+          setUser(response.data.user); // Store user data in localStorage
+          setIsLoggedIn(true);
+          toast({
+            title: "Login Successful",
+            description: "You have been logged in successfully.",
+          });
+          navigate('/profile');
+        } else {
+          throw new Error("No user data in response");
+        }
       } catch (error) {
         toast({
           title: "Login Failed",

@@ -1,5 +1,4 @@
-
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { useToast } from "@/components/ui/use-toast";
 
 export type CartItem = {
@@ -26,16 +25,29 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const { toast } = useToast();
 
+  // Load cart from localStorage when component mounts
+  useEffect(() => {
+    const storedCart = localStorage.getItem('cart');
+    if (storedCart) {
+      setCartItems(JSON.parse(storedCart));
+    }
+  }, []);
+
+  // Save cart to localStorage whenever cartItems change
+  useEffect(() => {
+    if (cartItems.length > 0) {
+      localStorage.setItem('cart', JSON.stringify(cartItems));
+    }
+  }, [cartItems]);
+
   const addToCart = (item: Omit<CartItem, 'days' | 'quantity'>) => {
-    // Check if item already exists in cart
     const existingItem = cartItems.find((cartItem) => cartItem.id === item.id);
     
     if (existingItem) {
-      // If item exists, increase quantity
       updateQuantity(item.id, 1);
     } else {
-      // Add new item to cart
-      setCartItems([...cartItems, { ...item, days: 1, quantity: 1 }]);
+      const newItem = { ...item, days: 1, quantity: 1 };
+      setCartItems([...cartItems, newItem]);
       
       toast({
         title: "Item added to cart",
