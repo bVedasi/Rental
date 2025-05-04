@@ -88,7 +88,7 @@ const Cart = () => {
                               <X size={18} />
                             </button>
                           </div>
-                          <p className="text-gold mt-1 font-montserrat">${item.price} / day</p>
+                          <p className="text-gold mt-1 font-montserrat">{item.price} / day</p>
                           
                           <div className="flex flex-col sm:flex-row justify-between mt-3 gap-3">
                             <div className="flex items-center">
@@ -124,7 +124,7 @@ const Cart = () => {
                           <div className="mt-2 text-right">
                             <p className="text-light font-montserrat">
                               Subtotal: <span className="text-gold font-semibold">
-                                ${(item.price * item.days * item.quantity).toFixed(2)}
+                                {(item.price * item.days * item.quantity).toFixed(2)}
                               </span>
                             </p>
                           </div>
@@ -148,21 +148,21 @@ const Cart = () => {
                   <div className="space-y-3 mb-4">
                     <div className="flex justify-between">
                       <span className="text-light-dark font-montserrat">Subtotal</span>
-                      <span className="text-light font-montserrat">${calculateSubtotal().toFixed(2)}</span>
+                      <span className="text-light font-montserrat">{calculateSubtotal().toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-light-dark font-montserrat">Delivery Fee</span>
-                      <span className="text-light font-montserrat">$9.99</span>
+                      <span className="text-light font-montserrat">9.99</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-light-dark font-montserrat">Taxes</span>
-                      <span className="text-light font-montserrat">${(calculateSubtotal() * 0.08).toFixed(2)}</span>
+                      <span className="text-light font-montserrat">{(calculateSubtotal() * 0.08).toFixed(2)}</span>
                     </div>
                     <div className="border-t border-gold/20 pt-3 mt-3">
                       <div className="flex justify-between font-semibold">
                         <span className="text-light font-montserrat">Total</span>
                         <span className="text-gold font-playfair">
-                          ${(calculateSubtotal() + 9.99 + calculateSubtotal() * 0.08).toFixed(2)}
+                          {(calculateSubtotal() + 9.99 + calculateSubtotal() * 0.08).toFixed(2)}
                         </span>
                       </div>
                     </div>

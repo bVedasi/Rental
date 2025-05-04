@@ -160,7 +160,7 @@ const Products = () => {
                            selectedTimeframe === 'daily' ? 'Per Day' : 'Per Week'}
                         </span>
                         <div className="text-gold text-2xl font-semibold font-playfair">
-                          ${getRateByTimeframe(product).toFixed(2)}
+                          {getRateByTimeframe(product).toFixed(2)}
                         </div>
                       </div>
                       <div className="text-xs text-light-dark font-montserrat">
