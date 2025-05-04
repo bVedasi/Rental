@@ -188,3 +188,13 @@ app.put('/api/cart/:id', async (req, res) => {
 app.listen(5000, () => {
   console.log('Server running on port 5000');
 });
+app.post('/api/addToCart', async (req, res) => {
+  const { user_id, item_id, duration } = req.body;
+
+  const { data, error } = await supabase.from('cart').insert([
+    { user_id, item_id, duration }
+  ]);
+
+  if (error) return res.status(500).json({ error: error.message });
+  res.status(200).json({ message: 'Item added to cart', data });
+});
